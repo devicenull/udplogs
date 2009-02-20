@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import logging, logging.config
+import os, logging, logging.config
 
 logging.config.fileConfig("logging.conf")
 main_log = logging.getLogger("main_log")
@@ -7,9 +7,19 @@ main_log = logging.getLogger("main_log")
 main_log.info("udpLogs daemon starting up")
 
 from input.file import FileInput
-from eventhandler import EventHandler
+from eventhandler import EventHandler,eventhandler
 
-eh = EventHandler()
-fs = FileInput(eh,"/home/devicenull/source/udpLogs/test.log")
+print globals()
 
-fs.start()
+for root, dirs, files in os.walk("/home/devicenull/source/udpLogs/events"):
+	for cur in files:
+		if cur[-3:] == ".py":
+			curevent = cur[:-3]
+			main_log.debug("Loading event %s" % curevent)
+			__import__("events.%s" % curevent,globals())
+
+
+fs = FileInput(eventhandler,"/home/devicenull/source/udpLogs/test.log")
+
+print eventhandler.event('server_cvar: "mp_friendlyfire" "1"')
+#fs.start()
