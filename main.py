@@ -21,5 +21,4 @@ for root, dirs, files in os.walk("/home/devicenull/source/udpLogs/events"):
 
 fs = FileInput(eventhandler,"/home/devicenull/source/udpLogs/test.log")
 
-print eventhandler.event('server_cvar: "mp_friendlyfire" "1"')
-#fs.start()
+fs.start()
