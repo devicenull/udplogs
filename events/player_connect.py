@@ -22,4 +22,4 @@ class player_connect:
 		return "player connected %s (%s) (%s)" % (self.name,self.steamid,self.ip)
 
 from eventhandler import eventhandler
-eventhandler.register(player_connect)
+eventhandler.registerEvent(player_connect)

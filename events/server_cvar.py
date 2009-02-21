@@ -17,4 +17,4 @@ class server_cvar:
 		return "server_cvar: %s changed to \"%s\"" % (self.cvar,self.value)
 
 from eventhandler import eventhandler
-eventhandler.register(server_cvar)
+eventhandler.registerEvent(server_cvar)

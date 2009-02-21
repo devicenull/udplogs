@@ -22,4 +22,4 @@ class player_triggered:
 		return "player %s (%s) triggered event %s" % (self.name,self.steamid,self.event)
 
 from eventhandler import eventhandler
-eventhandler.register(player_triggered)
+eventhandler.registerEvent(player_triggered)

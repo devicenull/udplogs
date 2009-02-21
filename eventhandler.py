@@ -7,9 +7,12 @@ class EventHandler:
 	def __init__(self):
 		self.events = []
 
-	def register(self,newevent):
+	def registerEvent(self,newevent):
 		self.events.append(newevent)
 		main_log.debug("Registered event %s" % newevent)
+
+	def registerCallback(self,callback,events):
+		pass
 
 	def event(self,instr):
 		instr = instr.strip()

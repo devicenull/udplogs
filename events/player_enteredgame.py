@@ -21,4 +21,4 @@ class player_enteredgame:
 		return "player %s (%s) entered the game" % (self.name,self.steamid)
 
 from eventhandler import eventhandler
-eventhandler.register(player_enteredgame)
+eventhandler.registerEvent(player_enteredgame)

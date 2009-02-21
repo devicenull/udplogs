@@ -22,4 +22,4 @@ class player_joinedteam:
 		return "player %s (%s) joined team %s" % (self.name,self.steamid,self.newteam)
 
 from eventhandler import eventhandler
-eventhandler.register(player_joinedteam)
+eventhandler.registerEvent(player_joinedteam)
