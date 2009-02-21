@@ -9,7 +9,12 @@ class server_cvar:
 		return (server_cvar.pattern.match(instr) != None)
 
 	def __init__(self,instr):
-		pass
+		obj = server_cvar.pattern.match(instr)
+		self.cvar = obj.group("cvar")
+		self.value = obj.group("value")
+	
+	def __str__(self):
+		return "server_cvar: %s changed to \"%s\"" % (self.cvar,self.value)
 
 from eventhandler import eventhandler
 eventhandler.register(server_cvar)
