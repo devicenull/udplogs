@@ -13,11 +13,9 @@ class EventHandler:
 
 	def event(self,instr):
 		instr = instr.strip()
-		event_log.debug(instr)
 
 		for cur in self.events:
 			if cur.isMatch(instr):
-				return cur(instr)
-		return None
+				event_log.debug(cur(instr))
 
 eventhandler = EventHandler()
