@@ -23,11 +23,15 @@ class EventHandler:
 	def event(self,instr,ip="127.0.0.1",port=27015,timestamp="sometime"):
 		instr = instr.strip()
 
+		found = 0
 		for cur in self.events:
 			if self.events[cur]['event'].isMatch(instr):
 				theevent = self.events[cur]['event'](instr)
 				event_log.debug(theevent)
+				found = 1
 				for cur_cb in self.events[cur]['callbacks']:
 					cur_cb(theevent,ip,port,timestamp)
 
+		if not found:
+			event_log.info("Unknown event: %s" % instr)
 eventhandler = EventHandler()
