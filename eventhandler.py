@@ -14,8 +14,8 @@ class EventHandler:
 
 	def registerCallback(self,callback,cb_events):
 		for cur in cb_events:
-			if events.has_key[cur]:
-				events[cur]['callbacks'].append(callback)
+			if self.events.has_key(cur):
+				self.events[cur]['callbacks'].append(callback)
 				main_log.debug("Registered callback %s for event %s" % (callback,cur))
 			else:
 				main_log.warning("Attempted to register callback %s for unknown event %s" % (callback,cur))
