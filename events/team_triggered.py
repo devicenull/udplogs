@@ -2,7 +2,7 @@ import re
 
 class team_triggered:
 	# Team "TERRORIST" triggered "Terrorists_Win" (CT "1") (T "4")
-	pattern = re.compile("Team \"(?P<team>.*)\" triggered \"(?P<event>.*)\"")
+	pattern = re.compile("Team \"(?P<team>.*)\" triggered \"(?P<event>[\w\s]*)\"(?P<extradata>.*)")
 
 	@staticmethod
 	def isMatch(instr):

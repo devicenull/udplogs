@@ -4,7 +4,7 @@ from standard_pattern import player
 
 class player_triggered:
 	# "[SC-UBW] Don<2273><BOT><TERRORIST>" triggered "Got_The_Bomb"
-	pattern = re.compile(player()+" triggered \"(?P<event>[A-Za-z0-9_]*)\"$")
+	pattern = re.compile(player()+" triggered \"(?P<event>[A-Za-z0-9_]*)\"")
 
 	@staticmethod
 	def isMatch(instr):
