@@ -23,10 +23,10 @@ class player_attacked:
                 self.victim_team = obj.group("team2")
 
 		self.weapon = obj.group("weapon")
-		self.damage = obj.group("damage")
-		self.damage_armor = obj.group("damage_armor")
-		self.health = obj.group("health")
-		self.armor = obj.group("armor")
+		self.damage = int(obj.group("damage"))
+		self.damage_armor = int(obj.group("damage_armor"))
+		self.health = int(obj.group("health"))
+		self.armor = int(obj.group("armor"))
 		self.hitgroup = obj.group("hitgroup")
 	
 	def __str__(self):
