@@ -6,7 +6,6 @@ main_log = logging.getLogger("main_log")
 
 main_log.info("udpLogs daemon starting up")
 
-from input.file import FileInput
 from eventhandler import EventHandler,eventhandler
 
 config = {'basedir':'/home/devicenull/source/udpLogs'}
@@ -39,6 +38,11 @@ for root, dirs, files in os.walk(os.path.join(config['basedir'],"plugins")):
 
 main_log.info("Loaded %i plugins!" % plugincount)
 
-fs = FileInput(eventhandler,"/home/devicenull/source/udpLogs/test.log")
+from input.udp import UDPInput
+udp = UDPInput(eventhandler,9988)
+udp.start()
 
-fs.start()
+#from input.file import FileInput
+#fs = FileInput(eventhandler,"/home/devicenull/source/udpLogs/test.log")
+
+#fs.start()
