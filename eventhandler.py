@@ -21,7 +21,7 @@ class EventHandler:
 				main_log.warning("Attempted to register callback %s for unknown event %s" % (callback,cur))
 
 	def event(self,instr,ip="127.0.0.1",port=27015,timestamp="sometime"):
-		instr = instr.strip()
+		instr = instr.strip().replace("\n","")
 
 		found = 0
 		for cur in self.events:
@@ -33,5 +33,5 @@ class EventHandler:
 					cur_cb(theevent,ip,port,timestamp)
 
 		if not found:
-			event_log.info("Unknown event: %s" % instr)
+			event_log.info("Unknown event: *%s*" % instr)
 eventhandler = EventHandler()
