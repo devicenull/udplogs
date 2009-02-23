@@ -16,6 +16,8 @@ class PlayerStats:
         suicides = 0
 
         weapons = {}
+	events = {}
+
 
         def __init__(self,steamid):
                 self.steamid = steamid
@@ -41,6 +43,13 @@ class PlayerStats:
                 self.kills=0
                 self.deaths=0
                 self.suicides=0
+
+		# Save any event info we have
+		for cur in self.events.keys():
+			txn.execute("""INSERT INTO players_events(player_id,event_id,triggercount) VALUES(SteamToInt(%s),%s,%s)
+					ON DUPLICATE KEY UPDATE triggercount=triggercount+%s"""
+					,(self.steamid,cur,self.events[cur],self.events[cur]))
+			self.events[cur] = 0
 
 
                 # Now save any weapons we have
