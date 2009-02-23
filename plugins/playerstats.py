@@ -1,9 +1,16 @@
-import logging
+import logging,time
+
 main_log = logging.getLogger("main_log")
+
+from twisted.enterprise import adbapi
 
 player_stats = {}
 
+read_pool = adbapi.ConnectionPool("MySQLdb",db="playerstats",user="playerstats")
+write_pool = read_pool
+
 class PlayerStats:
+	steamid = ""
 	names = []
 	ip = "unknown"
 	kills = 0
@@ -14,6 +21,11 @@ class PlayerStats:
 
 	weapons = {} 
 
+	def __init__(self,steamid):
+		self.steamid = steamid
+		if self.steamid == "BOT":
+			self.steamid="STEAM_0:1:1199"
+
 	def checkName(self,newname):
 		found = 0
 		for cur in self.names:
@@ -21,6 +33,27 @@ class PlayerStats:
 				found = 1
 		if not found:
 			self.names.append(newname)
+
+	def savePlayer(self):
+		later = write_pool.runInteraction(self._writePlayerToDB)
+		later.addErrback(self._DBError)
+
+	def _writePlayerToDB(self,txn):
+		# Do we have a player?
+		txn.execute("SELECT player_id FROM players WHERE player_id=SteamToInt(%s)",(self.steamid))
+
+		if txn.rowcount == 0:
+			txn.execute("INSERT INTO players(player_id,lastconnect,kills,deaths,suicides) VALUES(SteamToInt(%s),%s,%s,%s,%s)",
+				(self.steamid,self.lastconnect,self.kills,self.deaths,self.suicides))
+		else:
+			txn.execute("UPDATE players SET lastconnect=%s, kills=kills+%s, deaths=deaths+%s, suicides=suicides+%s WHERE player_id=SteamToInt(%s)", (self.lastconnect,self.kills,self.deaths,self.suicides,self.steamid))
+		self.kills=0
+		self.deaths=0
+		self.suicides=0
+
+	def _DBError(self,error):
+		main_log.error(error)
+
 class WeaponStats:
 	kills = 0
 	headshots = 0
@@ -30,9 +63,9 @@ class WeaponStats:
 def player_killed(event,ip,port,timestamp):
 	global player_stats
 	if not player_stats.has_key(event.attacker_steamid):
-		player_stats[event.attacker_steamid] = PlayerStats()
+		player_stats[event.attacker_steamid] = PlayerStats(event.attacker_steamid)
 	if not player_stats.has_key(event.victim_steamid):
-		player_stats[event.victim_steamid] = PlayerStats()
+		player_stats[event.victim_steamid] = PlayerStats(event.victim_steamid)
 
 	player_stats[event.attacker_steamid].checkName(event.attacker_name)
 	player_stats[event.victim_steamid].checkName(event.victim_name)
@@ -49,12 +82,13 @@ def player_killed(event,ip,port,timestamp):
 		player_stats[event.attacker_steamid].weapons[event.weapon].headshots += 1
 
 
+	player_stats[event.attacker_steamid].savePlayer()
 	dump_stats()
 
 def player_suicide(event,ip,port,timestamp):
 	global player_stats
 	if not player_stats.has_key(event.steamid):
-		player_stats[event.steamid] = PlayerStats()
+		player_stats[event.steamid] = PlayerStats(event.steamid)
 
 	player_stats[event.steamid].checkName(event.name)
 	player_stats[event.steamid].suicides += 1
@@ -62,16 +96,16 @@ def player_suicide(event,ip,port,timestamp):
 def player_connect(event,ip,port,timestamp):
 	global player_stats
 	if not player_stats.has_key(event.steamid):
-		player_stats[event.steamid] = PlayerStats()
+		player_stats[event.steamid] = PlayerStats(event.steamid)
 
 	player_stats[event.steamid].checkName(event.name)
 	player_stats[event.steamid].ip = event.ip
-	player_stats[event.steamid].lastconnect = timestamp
+	player_stats[event.steamid].lastconnect = time.time()
 
 def player_weaponstats(event,ip,port,timestamp):
 	global player_stats
 	if not player_stats.has_key(event.steamid):
-		player_stats[event.steamid] = PlayerStats()
+		player_stats[event.steamid] = PlayerStats(event.steamid)
 
 	player_stats[event.steamid].checkName(event.name)
 
@@ -86,7 +120,7 @@ def player_weaponstats(event,ip,port,timestamp):
 def player_attacked(event,ip,port,timestamp):
         global player_stats
         if not player_stats.has_key(event.attacker_steamid):
-                player_stats[event.attacker_steamid] = PlayerStats()
+                player_stats[event.attacker_steamid] = PlayerStats(event.attacker_steamid)
 
 	player_stats[event.attacker_steamid].checkName(event.attacker_name)
 
