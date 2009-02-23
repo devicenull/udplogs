@@ -50,7 +50,7 @@ class PlayerStats:
 
 		# Save any event info we have
 		for cur in self.events.keys():
-			txn.execute("""INSERT INTO player_events(player_id,event_id,triggercount) VALUES(SteamToInt(%s),%s,%s)
+			txn.execute("""INSERT INTO player_events(player_id,event_name,triggercount) VALUES(SteamToInt(%s),%s,%s)
 					ON DUPLICATE KEY UPDATE triggercount=triggercount+%s"""
 					,(self.steamid,cur,self.events[cur],self.events[cur]))
 			self.events[cur] = 0
