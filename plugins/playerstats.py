@@ -39,26 +39,46 @@ class PlayerStats:
 		later.addErrback(self._DBError)
 
 	def _writePlayerToDB(self,txn):
-		# Do we have a player?
-		txn.execute("SELECT player_id FROM players WHERE player_id=SteamToInt(%s)",(self.steamid))
-
-		if txn.rowcount == 0:
-			txn.execute("INSERT INTO players(player_id,lastconnect,kills,deaths,suicides) VALUES(SteamToInt(%s),%s,%s,%s,%s)",
-				(self.steamid,self.lastconnect,self.kills,self.deaths,self.suicides))
-		else:
-			txn.execute("UPDATE players SET lastconnect=%s, kills=kills+%s, deaths=deaths+%s, suicides=suicides+%s WHERE player_id=SteamToInt(%s)", (self.lastconnect,self.kills,self.deaths,self.suicides,self.steamid))
+		txn.execute("""INSERT INTO players(player_id,lastconnect,kills,deaths,suicides) VALUES(SteamToInt(%s),%s,%s,%s,%s)
+				ON DUPLICATE KEY UPDATE lastconnect=%s, kills=kills+%s, deaths=deaths+%s, suicides=suicides+%s""",
+				(self.steamid,self.lastconnect,self.kills,self.deaths,self.suicides,self.lastconnect,self.kills,self.deaths,self.suicides))
 		self.kills=0
 		self.deaths=0
 		self.suicides=0
 
+
+		# Now save any weapons we have
+		for cur in self.weapons.keys():
+			self.weapons[cur].saveWeapon(self)
+
 	def _DBError(self,error):
-		main_log.error(error)
+		main_log.error(str(error))
 
 class WeaponStats:
+	name = "unknown"
 	kills = 0
 	headshots = 0
 	damage = 0
 	tks = 0
+
+	def __init__(self,weapon):
+		self.name = weapon
+
+	def saveWeapon(self,player):
+		later = write_pool.runInteraction(self._writeWeaponToDB,player)
+		later.addErrback(self._DBError)
+
+	def _writeWeaponToDB(self,txn,player):
+		txn.execute("""INSERT INTO player_weapons(player_id,weapon_name,kills,headshots,damage,tks) VALUES(SteamToInt(%s),%s,%s,%s,%s,%s)
+				ON DUPLICATE KEY UPDATE kills=kills+%s, headshots=headshots+%s, damage=damage+%s, tks=tks+%s""",
+				(player.steamid,self.name,self.kills,self.headshots,self.damage,self.tks,self.kills,self.headshots,self.damage,self.tks))
+		self.kills=0
+		self.damage=0
+		self.tks=0
+		self.headshots=0
+
+	def _DBError(self,error):
+		main_log.error(str(error))
 
 def player_killed(event,ip,port,timestamp):
 	global player_stats
@@ -110,7 +130,7 @@ def player_weaponstats(event,ip,port,timestamp):
 	player_stats[event.steamid].checkName(event.name)
 
 	if not player_stats[event.steamid].weapons.has_key(event.weapon):
-		player_stats[event.steamid].weapons[event.weapon] = WeaponStats()
+		player_stats[event.steamid].weapons[event.weapon] = WeaponStats(event.weapon)
 
 	player_stats[event.steamid].weapons[event.weapon].kills += event.kills
 	player_stats[event.steamid].weapons[event.weapon].headshots += event.headshots
@@ -125,7 +145,7 @@ def player_attacked(event,ip,port,timestamp):
 	player_stats[event.attacker_steamid].checkName(event.attacker_name)
 
         if not player_stats[event.attacker_steamid].weapons.has_key(event.weapon):
-                player_stats[event.attacker_steamid].weapons[event.weapon] = WeaponStats()
+                player_stats[event.attacker_steamid].weapons[event.weapon] = WeaponStats(event.weapon)
 
         player_stats[event.attacker_steamid].weapons[event.weapon].damage += event.damage
 
