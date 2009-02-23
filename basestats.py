@@ -1,3 +1,7 @@
+import logging
+
+main_log = logging.getLogger("main_log")
+
 from twisted.enterprise import adbapi
 
 player_stats = {}
@@ -46,7 +50,7 @@ class PlayerStats:
 
 		# Save any event info we have
 		for cur in self.events.keys():
-			txn.execute("""INSERT INTO players_events(player_id,event_id,triggercount) VALUES(SteamToInt(%s),%s,%s)
+			txn.execute("""INSERT INTO player_events(player_id,event_id,triggercount) VALUES(SteamToInt(%s),%s,%s)
 					ON DUPLICATE KEY UPDATE triggercount=triggercount+%s"""
 					,(self.steamid,cur,self.events[cur],self.events[cur]))
 			self.events[cur] = 0
