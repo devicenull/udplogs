@@ -27,7 +27,7 @@ class EventHandler:
 		for cur in self.events:
 			if self.events[cur]['event'].isMatch(instr):
 				theevent = self.events[cur]['event'](instr)
-				event_log.debug(theevent)
+				event_log.debug("%s:%s - %s" % (ip,port,theevent))
 				found = 1
 				for cur_cb in self.events[cur]['callbacks']:
 					cur_cb(theevent,ip,port,timestamp)
