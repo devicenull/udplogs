@@ -1,0 +1,47 @@
+DELIMITER | 
+
+drop function SteamToInt|
+
+create function SteamToInt(steamid varchar(64))
+RETURNS bigint(64)
+BEGIN
+	declare authserver int;
+	declare authid int;
+
+	set authserver = cast(substr(steamid,9,1) as unsigned integer);
+	set authid = cast(substr(steamid,11) as unsigned integer);
+	return 76561197960265728+(authid*2)+authserver;
+END |
+
+drop function IntToSteam|
+
+create function IntToSteam(communityid bigint(64))
+RETURNS varchar(64)
+BEGIN
+	declare ret varchar(64);
+	declare authserver int;
+	declare authid bigint;
+
+	set communityid = communityid-76561197960265728;
+
+	set authserver = mod(communityid,2);
+	set communityid = communityid-authserver;
+
+	set authid = communityid/2;
+
+	set ret = concat("STEAM_0:",authserver,":",authid);
+	return ret;
+END |
+
+DELIMITER ;
+
+create table players
+(
+	player_id bigint default 0
+	,lastconnect datetime	
+	,kills int
+	,deaths int
+	,suicides int
+	
+	,primary key (player_id)
+);
