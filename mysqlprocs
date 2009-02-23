@@ -45,3 +45,15 @@ create table players
 	
 	,primary key (player_id)
 );
+
+create table player_weapons
+(
+	player_id bigint default 0
+	,weapon_name varchar(64)
+	,kills int
+	,headshots int
+	,damage int
+	,tks int
+
+	,primary key(player_id,weapon_name)
+);
