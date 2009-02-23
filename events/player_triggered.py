@@ -15,7 +15,7 @@ class player_triggered:
                 self.name = obj.group("name")
                 self.uniqueid = obj.group("uniqueid")
                 self.steamid = obj.group("steamid")
-		self.oldteam = obj.group("team")
+		self.team = obj.group("team")
 		self.event = obj.group("event")
 	
 	def __str__(self):
