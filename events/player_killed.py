@@ -24,7 +24,7 @@ class player_killed:
 		self.victim_team = obj.group("team2")
 
 		self.weapon = obj.group("weapon")
-		self.headshot = (obj.group("headshot") == " (headshot)")
+		self.headshot = len(obj.group("headshot").strip()) > 1
 	
 	def __str__(self):
 		return "player %s killed %s with %s headshot: %i" % (self.attacker_name,self.victim_name,self.weapon,self.headshot) 
