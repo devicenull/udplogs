@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python -O 
 import os, logging, logging.config
 
 logging.config.fileConfig("logging.conf")
