@@ -6,7 +6,7 @@ from basestats import PlayerStats,WeaponStats,player_stats
 
 def player_triggered(event,ip,port,timestamp):
 	global player_stats
-	if not player_stats[event.steamid].events.has_key(event.event):
+	if not player_stats.has_key(event.steamid):
 		player_stats[event.steamid] = PlayerStats(event.steamid)
 
 	if not player_stats[event.steamid].events.has_key(event.event):
