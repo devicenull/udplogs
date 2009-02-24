@@ -2,90 +2,60 @@ import logging,time
 
 main_log = logging.getLogger("main_log")
 
-from basestats import PlayerStats,WeaponStats,player_stats
+from basestats import Stats
 
 def player_killed(event,ip,port,timestamp):
-	global player_stats
-	if not player_stats.has_key(event.attacker_steamid):
-		player_stats[event.attacker_steamid] = PlayerStats(event.attacker_steamid)
-	if not player_stats.has_key(event.victim_steamid):
-		player_stats[event.victim_steamid] = PlayerStats(event.victim_steamid)
+	attacker = Stats.getPlayer(event.attacker_steamid,ip,port)
+	victim = Stats.getPlayer(event.victim_steamid,ip,port)
 
-	player_stats[event.attacker_steamid].checkName(event.attacker_name)
-	player_stats[event.victim_steamid].checkName(event.victim_name)
+	attacker.checkName(event.attacker_name)
+	victim.checkName(event.victim_name)
 
-	player_stats[event.attacker_steamid].kills += 1
-	player_stats[event.victim_steamid].deaths += 1
+	attacker.kills += 1
+	victim.deaths += 1
 
-	if not player_stats[event.attacker_steamid].weapons.has_key(event.weapon):
-                player_stats[event.attacker_steamid].weapons[event.weapon] = WeaponStats()
-
-        player_stats[event.attacker_steamid].weapons[event.weapon].kills += 1
+        curWeapon = attacker.getWeapon(event.weapon)
+	curWeapon.kills += 1
 
 	if event.headshot == 1:
-		player_stats[event.attacker_steamid].weapons[event.weapon].headshots += 1
+		curWeapon.headshots += 1
 
 
-	player_stats[event.attacker_steamid].savePlayer()
-	dump_stats()
+	attacker.savePlayer(ip,port)
 
 def player_suicide(event,ip,port,timestamp):
-	global player_stats
-	if not player_stats.has_key(event.steamid):
-		player_stats[event.steamid] = PlayerStats(event.steamid)
+	player = Stats.getPlayer(event.steamid,ip,port)
 
-	player_stats[event.steamid].checkName(event.name)
-	player_stats[event.steamid].suicides += 1
+	player.checkName(event.name)
+	player.suicides += 1
 
 def player_connect(event,ip,port,timestamp):
-	global player_stats
-	if not player_stats.has_key(event.steamid):
-		player_stats[event.steamid] = PlayerStats(event.steamid)
+	player = Stats.getPlayer(event.steamid,ip,port)
 
-	player_stats[event.steamid].checkName(event.name)
-	player_stats[event.steamid].ip = event.ip
-	player_stats[event.steamid].lastconnect = time.time()
+	player.checkName(event.name)
+	player.ip = event.ip
+	player.lastconnect = time.time()
 
 def player_weaponstats(event,ip,port,timestamp):
-	global player_stats
-	if not player_stats.has_key(event.steamid):
-		player_stats[event.steamid] = PlayerStats(event.steamid)
+	player = Stats.getPlayer(event.steamid,ip,port)
 
-	player_stats[event.steamid].checkName(event.name)
+	player.checkName(event.name)
 
-	if not player_stats[event.steamid].weapons.has_key(event.weapon):
-		player_stats[event.steamid].weapons[event.weapon] = WeaponStats(event.weapon)
-
-	player_stats[event.steamid].weapons[event.weapon].kills += event.kills
-	player_stats[event.steamid].weapons[event.weapon].headshots += event.headshots
-	player_stats[event.steamid].weapons[event.weapon].damage += event.damage
-	player_stats[event.steamid].weapons[event.weapon].tks += event.tks
+	curWeapon = player.getWeapon(event.weapon)
+	
+	curWeapon.kills += event.kills
+	curWeapon.headshots += event.headshots
+	curWeapon.weapons[event.weapon].damage += event.damage
+	curWeapon.weapons[event.weapon].tks += event.tks
 
 def player_attacked(event,ip,port,timestamp):
-        global player_stats
-        if not player_stats.has_key(event.attacker_steamid):
-                player_stats[event.attacker_steamid] = PlayerStats(event.attacker_steamid)
+	attacker = Stats.getPlayer(event.attacker_steamid,ip,port)
 
-	player_stats[event.attacker_steamid].checkName(event.attacker_name)
+	attacker.checkName(event.attacker_name)
 
-        if not player_stats[event.attacker_steamid].weapons.has_key(event.weapon):
-                player_stats[event.attacker_steamid].weapons[event.weapon] = WeaponStats(event.weapon)
+	curWeapon = attacker.getWeapon(event.weapon)
+        curWeapon.damage += event.damage
 
-        player_stats[event.attacker_steamid].weapons[event.weapon].damage += event.damage
-
-
-def dump_stats():
-	global player_stats
-	of = open("stats.txt","w")
-	for cur in player_stats.keys():
-		of.write("%s:\n" % cur)
-		of.write("\tAliases: %s\n" % (",".join(player_stats[cur].names)))
-		of.write("\tKills: %i Deaths: %i Suicides: %i\n" % (player_stats[cur].kills,player_stats[cur].deaths,player_stats[cur].suicides))
-		for cur_wep in player_stats[cur].weapons.keys():
-			of.write("\t%s\n" % cur_wep)
-			of.write("\t\tKills: %i Headshots: %i Damage: %i TK's: %i\n" % (player_stats[cur].weapons[cur_wep].kills,player_stats[cur].weapons[cur_wep].headshots,player_stats[cur].weapons[cur_wep].damage,player_stats[cur].weapons[cur_wep].tks))
-
-	of.close()
 
 from eventhandler import eventhandler
 eventhandler.registerCallback(player_killed,['player_killed'])
