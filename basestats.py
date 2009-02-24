@@ -130,11 +130,14 @@ class EventStats:
 		self.last_trigger = time.time()
 
 	def saveEvent(self,player,server_id):
-		later = write_pool.runINteraction(self._writeEventToDB,player,server_id)
+		later = write_pool.runInteraction(self._writeEventToDB,player,server_id)
 		later.addErrback(self._DBError)
 
 	def _writeEventToDB(self,txn,player,server_id):
 		txn.execute("""INSERT INTO player_events(server_id,player_id,event_name,triggercount) VALUES(%s,SteamToInt(%s),%s,%s)
-				ON DUPLICATE KEY triggercount=triggercount+%s"""
-				,(server_id,player.steamid,self.name,self.trigger_count))
+				ON DUPLICATE KEY UPDATE triggercount=triggercount+%s"""
+				,(server_id,player.steamid,self.name,self.trigger_count,self.trigger_count))
 		self.trigger_count = 0
+
+	def _DBError(self,error):
+		main_log.error(str(error))

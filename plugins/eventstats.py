@@ -5,7 +5,7 @@ from basestats import Stats
 
 
 def player_triggered(event,ip,port,timestamp):
-	player = stats.getPlayer(event.steamid)
+	player = Stats.getPlayer(event.steamid,ip,port)
 	curevent = player.getEvent(event.event)
 	
 	curevent.trigger_count += 1
