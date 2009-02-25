@@ -3,7 +3,7 @@ DELIMITER |
 drop function SteamToInt|
 
 create function SteamToInt(steamid varchar(64))
-RETURNS bigint(64)
+RETURNS bigint(64) DETERMINISTIC
 BEGIN
 	declare authserver int;
 	declare authid int;
@@ -16,7 +16,7 @@ END |
 drop function IntToSteam|
 
 create function IntToSteam(communityid bigint(64))
-RETURNS varchar(64)
+RETURNS varchar(64) DETERMINISTIC
 BEGIN
 	declare ret varchar(64);
 	declare authserver int;
