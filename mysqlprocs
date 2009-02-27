@@ -39,6 +39,8 @@ DROP TABLE servers;
 DROP TABLE players;
 DROP TABLE player_weapons;
 DROP TABLE player_events;
+DROP TABLE player_names;
+DROP TABLE player_targets;
 
 CREATE TABLE servers (
   server_id int(11) NOT NULL auto_increment
@@ -66,6 +68,7 @@ CREATE TABLE player_weapons (
   ,headshots int(11) default NULL
   ,damage int(11) default NULL
   ,tks int(11) default NULL
+
   ,PRIMARY KEY  (server_id,player_id,weapon_name)
 ) ENGINE=InnoDB;
 
@@ -76,3 +79,43 @@ CREATE TABLE player_events (
   ,triggercount int(11) default NULL
   ,PRIMARY KEY  (server_id,player_id,event_name)
 ) ENGINE=InnoDB;
+
+CREATE TABLE player_names (
+  server_id int(11) NOT NULL
+  ,player_id bigint(20) NOT NULL
+  ,player_name varchar(128)
+  ,lastuse datetime
+
+  ,PRIMARY KEY (server_id,player_id,player_name)
+) ENGINE=InnoDB;
+
+CREATE TABLE player_team (
+  server_id int(11) NOT NULL
+  ,player_id bigint(20) NOT NULL
+  ,team_name varchar(32)
+  ,join_count int(5) 
+
+  ,PRIMARY KEY (server_id,player_id,team_name)
+) ENGINE=InnoDB;
+
+CREATE TABLE player_maps (
+  server_id int(11) NOT NULL
+  ,player_id bigint(20) NOT NULL
+  ,map_name varchar(64)
+  ,kills int(11)
+  ,deaths int(11)
+  ,headshots int(11)
+
+  ,PRIMARY KEY (server_id,player_id,map_name)
+) ENGINE=InnoDB;
+
+CREATE TABLE player_targets (
+  server_id int(11) NOT NULL
+  ,player_id bigint(20) NOT NULL
+  ,target_id bigint(20) NOT NULL
+  ,kills int(11)
+  ,headshots int(11)
+
+  ,PRIMARY KEY (server_id,player_id,target_id)
+) ENGINE=InnoDB;
+

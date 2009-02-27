@@ -33,7 +33,7 @@ class PlayerStats:
 
         weapons = {}
 	events = {}
-
+	teams = {}
 
         def __init__(self,steamid):
                 self.steamid = steamid
@@ -78,6 +78,16 @@ class PlayerStats:
                 self.kills=0
                 self.deaths=0
                 self.suicides=0
+
+		for cur_name in self.names:
+			txn.excute("""INSERT INTO player_names(server_id,player_id,player_name,lastuse) VALUES(%s,SteamToInt(%s),%s,NOW())
+				ON DUPLICATE KEY UPDATE lastuse=NOW()"""
+				,(server_id,self.steamid,cur_name))
+
+		for cur_team in self.teams.keys():
+			txn.execute("""INSERT INTO player_team(server_id,player_id,team_name,join_count) VALUES(%s,SteamToInt(%s),%s,%s)
+				ON DUPLICATE KEY UPDATE join_count=join_count+%s"""
+				,(server_id,self.steamid,cur_team,self.teams[cur_team],self.teams[cur_team]))
 
 		# Save any event info we have
 		for cur in self.events.keys():
