@@ -41,6 +41,8 @@ DROP TABLE player_weapons;
 DROP TABLE player_events;
 DROP TABLE player_names;
 DROP TABLE player_targets;
+DROP TABLE player_team;
+DROP TABLE player_maps;
 
 CREATE TABLE servers (
   server_id int(11) NOT NULL auto_increment
@@ -54,9 +56,8 @@ CREATE TABLE players (
   server_id int(11) NOT NULL default '0'
   ,player_id bigint(20) NOT NULL default '0'
   ,lastconnect datetime default NULL
-  ,kills int(11) default NULL
-  ,deaths int(11) default NULL
-  ,suicides int(11) default NULL
+
+  ,CONSTRAINT FOREIGN KEY (server_id) REFERENCES servers (server_id) 
   ,PRIMARY KEY  (server_id,player_id)
 ) ENGINE=InnoDB;
 
@@ -69,6 +70,7 @@ CREATE TABLE player_weapons (
   ,damage int(11) default NULL
   ,tks int(11) default NULL
 
+  ,CONSTRAINT FOREIGN KEY (server_id,player_id) REFERENCES players (server_id,player_id)
   ,PRIMARY KEY  (server_id,player_id,weapon_name)
 ) ENGINE=InnoDB;
 
@@ -77,6 +79,8 @@ CREATE TABLE player_events (
   ,player_id bigint(20) NOT NULL default '0'
   ,event_name varchar(64) NOT NULL default ''
   ,triggercount int(11) default NULL
+
+  ,CONSTRAINT FOREIGN KEY (server_id,player_id) REFERENCES players (server_id,player_id)
   ,PRIMARY KEY  (server_id,player_id,event_name)
 ) ENGINE=InnoDB;
 
@@ -86,6 +90,7 @@ CREATE TABLE player_names (
   ,player_name varchar(128)
   ,lastuse datetime
 
+  ,CONSTRAINT FOREIGN KEY (server_id,player_id) REFERENCES players (server_id,player_id)
   ,PRIMARY KEY (server_id,player_id,player_name)
 ) ENGINE=InnoDB;
 
@@ -93,8 +98,9 @@ CREATE TABLE player_team (
   server_id int(11) NOT NULL
   ,player_id bigint(20) NOT NULL
   ,team_name varchar(32)
-  ,join_count int(5) 
+  ,join_count int(5)
 
+  ,CONSTRAINT FOREIGN KEY (server_id,player_id) REFERENCES players (server_id,player_id)
   ,PRIMARY KEY (server_id,player_id,team_name)
 ) ENGINE=InnoDB;
 
@@ -105,7 +111,9 @@ CREATE TABLE player_maps (
   ,kills int(11)
   ,deaths int(11)
   ,headshots int(11)
+  ,suicides int(11)
 
+  ,CONSTRAINT FOREIGN KEY (server_id,player_id) REFERENCES players (server_id,player_id)
   ,PRIMARY KEY (server_id,player_id,map_name)
 ) ENGINE=InnoDB;
 
@@ -116,6 +124,8 @@ CREATE TABLE player_targets (
   ,kills int(11)
   ,headshots int(11)
 
+  ,CONSTRAINT FOREIGN KEY (server_id,player_id) REFERENCES players (server_id,player_id)
+  ,CONSTRAINT FOREIGN KEY (server_id,target_id) REFERENCES players (server_id,player_id)
   ,PRIMARY KEY (server_id,player_id,target_id)
 ) ENGINE=InnoDB;
 
