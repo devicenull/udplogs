@@ -20,9 +20,6 @@ def player_killed(event,ip,port,timestamp):
 	if event.headshot == 1:
 		curWeapon.headshots += 1
 
-
-	attacker.savePlayer(ip,port)
-
 def player_suicide(event,ip,port,timestamp):
 	player = Stats.getPlayer(event.steamid,ip,port)
 

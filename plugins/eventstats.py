@@ -15,6 +15,16 @@ def player_joinedteam(event,ip,port,timestamp):
 	
 	player.getTeam(event.newteam).join_count += 1
 
+def server_map(event,ip,port,timestamp):
+	curmap = Stats.getServerMap(ip,port)
+
+	players = Stats.getPlayers(ip,port)
+	for cur in players:
+		players[cur].savePlayer(ip,port,curmap)
+
+	Stats.setServerMap(ip,port,event.map)
+
 from eventhandler import eventhandler
 eventhandler.registerCallback(player_triggered,['player_triggered'])
 eventhandler.registerCallback(player_joinedteam,['player_joinedteam'])
+eventhandler.registerCallback(server_map,['server_map'])

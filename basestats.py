@@ -14,12 +14,28 @@ class Stats:
 	def getPlayer(steamid,server_ip,server_port):
 		srvkey = "%s:%i" % (server_ip,server_port)
 		if not Stats.servers.has_key(srvkey):
-			Stats.servers[srvkey] = {}
+			Stats.servers[srvkey] = {'map':'unknown', 'players':{}}
 
-		if not Stats.servers[srvkey].has_key(steamid):
-			Stats.servers[srvkey][steamid] = PlayerStats(steamid)
+		if not Stats.servers[srvkey]['players'].has_key(steamid):
+			Stats.servers[srvkey]['players'][steamid] = PlayerStats(steamid)
 
-		return Stats.servers[srvkey][steamid]
+		return Stats.servers[srvkey]['players'][steamid]
+
+	@staticmethod
+	def getServerMap(server_ip,server_port):
+		srvkey = "%s:%i" % (server_ip,server_port)
+		return Stats.servers[srvkey]['map']
+
+	@staticmethod
+	def setServerMap(server_ip,server_port,map):
+		srvkey = "%s:%i" % (server_ip,server_port)		
+		Stats.servers[srvkey]['map'] = map
+
+	@staticmethod
+	def getPlayers(server_ip,server_port):
+		srvkey = "%s:%i" % (server_ip,server_port)
+		return Stats.servers[srvkey]['players']
+
 
 class PlayerStats:
         steamid = ""
@@ -30,6 +46,8 @@ class PlayerStats:
         steamid = 0
         lastconnect = 0
         suicides = 0
+	headshots = 0
+
 
         weapons = {}
 	events = {}
@@ -67,23 +85,27 @@ class PlayerStats:
 
 		return self.teams[teamname]
 
-        def savePlayer(self,server_ip,server_port):
-                later = write_pool.runInteraction(self._writePlayerToDB,(server_ip,server_port))
+        def savePlayer(self,server_ip,server_port,map):
+                later = write_pool.runInteraction(self._writePlayerToDB,(server_ip,server_port),map)
                 later.addErrback(self._DBError)
 
-        def _writePlayerToDB(self,txn,(server_ip,server_port)):
+        def _writePlayerToDB(self,txn,(server_ip,server_port),map):
 		txn.execute("""INSERT INTO servers(server_ip,server_port) VALUES(%s,%s)
 				ON DUPLICATE KEY UPDATE server_ip=server_ip""",(server_ip,server_port))
 
                 txn.execute("""SELECT server_id FROM servers WHERE server_ip=%s AND server_port=%s""",(server_ip,server_port))
 		server_id = txn.fetchone()[0]
 
-		txn.execute("""INSERT INTO players(server_id,player_id,lastconnect,kills,deaths,suicides) VALUES(%s,SteamToInt(%s),%s,%s,%s,%s)
-                                ON DUPLICATE KEY UPDATE lastconnect=%s, kills=kills+%s, deaths=deaths+%s, suicides=suicides+%s""",
-                                (server_id,self.steamid,self.lastconnect,self.kills,self.deaths,self.suicides,self.lastconnect,self.kills,self.deaths,self.suicides))
+		txn.execute("""INSERT INTO players(server_id,player_id,lastconnect) VALUES(%s,SteamToInt(%s),%s)
+				ON DUPLICATE KEY UPDATE lastconnect=%s""",(server_id,self.steamid,self.lastconnect,self.lastconnect))
+
+		txn.execute("""INSERT INTO player_maps(server_id,player_id,map_name,kills,deaths,headshots,suicides) VALUES(%s,SteamToInt(%s),%s,%s,%s,%s,%s)
+                                ON DUPLICATE KEY UPDATE kills=kills+%s, deaths=deaths+%s, suicides=suicides+%s, headshots=headshots+%s""",
+                                (server_id,self.steamid,map,self.kills,self.deaths,self.headshots,self.suicides,self.kills,self.deaths,self.suicides,self.headshots))
                 self.kills=0
                 self.deaths=0
                 self.suicides=0
+		self.headshots=0
 
 		for cur_name in self.names:
 			txn.execute("""INSERT INTO player_names(server_id,player_id,player_name,lastuse) VALUES(%s,SteamToInt(%s),%s,NOW())
