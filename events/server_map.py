@@ -11,7 +11,7 @@ class server_map:
 	def __init__(self,instr):
 		obj = server_map.pattern.match(instr)
 		self.map = obj.group("map")
-		self.map = obj.group("crc")
+		self.crc = obj.group("crc")
 	
 	def __str__(self):
 		return "server changed map to %s" % (self.map)
