@@ -51,7 +51,7 @@ CREATE TABLE servers (
 ) ENGINE=InnoDB;
 
 CREATE TABLE players (
-  server_id int(11) NOT NULL default '0',
+  server_id int(11) NOT NULL default '0'
   ,player_id bigint(20) NOT NULL default '0'
   ,lastconnect datetime default NULL
   ,kills int(11) default NULL

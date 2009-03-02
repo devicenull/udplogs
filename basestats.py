@@ -61,6 +61,12 @@ class PlayerStats:
 
 		return self.events[eventname]
 
+	def getTeam(self,teamname):
+		if not self.teams.has_key(teamname):
+			self.teams[teamname] = TeamStats(teamname)
+
+		return self.teams[teamname]
+
         def savePlayer(self,server_ip,server_port):
                 later = write_pool.runInteraction(self._writePlayerToDB,(server_ip,server_port))
                 later.addErrback(self._DBError)
@@ -80,14 +86,13 @@ class PlayerStats:
                 self.suicides=0
 
 		for cur_name in self.names:
-			txn.excute("""INSERT INTO player_names(server_id,player_id,player_name,lastuse) VALUES(%s,SteamToInt(%s),%s,NOW())
+			txn.execute("""INSERT INTO player_names(server_id,player_id,player_name,lastuse) VALUES(%s,SteamToInt(%s),%s,NOW())
 				ON DUPLICATE KEY UPDATE lastuse=NOW()"""
 				,(server_id,self.steamid,cur_name))
 
+		# Save any team info we have
 		for cur_team in self.teams.keys():
-			txn.execute("""INSERT INTO player_team(server_id,player_id,team_name,join_count) VALUES(%s,SteamToInt(%s),%s,%s)
-				ON DUPLICATE KEY UPDATE join_count=join_count+%s"""
-				,(server_id,self.steamid,cur_team,self.teams[cur_team],self.teams[cur_team]))
+			self.teams[cur_team].saveEvent(self,server_id)
 
 		# Save any event info we have
 		for cur in self.events.keys():
@@ -148,6 +153,27 @@ class EventStats:
 				ON DUPLICATE KEY UPDATE triggercount=triggercount+%s"""
 				,(server_id,player.steamid,self.name,self.trigger_count,self.trigger_count))
 		self.trigger_count = 0
+
+	def _DBError(self,error):
+		main_log.error(str(error))
+
+
+class TeamStats:
+	name = "unknown"
+	join_count = 0
+
+	def __init__(self,team):
+		self.name = team
+
+	def saveEvent(self,player,server_id):
+		later = write_pool.runInteraction(self._writeTeamToDB,player,server_id)
+		later.addErrback(self._DBError)
+
+	def _writeTeamToDB(self,txn,player,server_id):
+		txn.execute("""INSERT INTO player_team(server_id,player_id,team_name,join_count) VALUES(%s,SteamToInt(%s),%s,%s)
+			ON DUPLICATE KEY UPDATE join_count=join_count+%s"""
+			,(server_id,player.steamid,self.name,self.join_count,self.join_count))
+		self.join_count = 0
 
 	def _DBError(self,error):
 		main_log.error(str(error))

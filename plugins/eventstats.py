@@ -13,7 +13,7 @@ def player_triggered(event,ip,port,timestamp):
 def player_joinedteam(event,ip,port,timestamp):
 	player = Stats.getPlayer(event.steamid,ip,port)
 	
-	player.teams[event.newteam] += 1
+	player.getTeam(event.newteam).join_count += 1
 
 from eventhandler import eventhandler
 eventhandler.registerCallback(player_triggered,['player_triggered'])
