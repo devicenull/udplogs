@@ -17,8 +17,13 @@ def player_killed(event,ip,port,timestamp):
         curWeapon = attacker.getWeapon(event.weapon)
 	curWeapon.kills += 1
 
+	vs = attacker.getVictimStats(victim.steamid)
+	vs.damage += event.damage
+	vs.kills += 1
+
 	if event.headshot == 1:
 		curWeapon.headshots += 1
+		vs.headshots += 1
 
 def player_suicide(event,ip,port,timestamp):
 	player = Stats.getPlayer(event.steamid,ip,port)

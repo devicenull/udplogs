@@ -90,7 +90,7 @@ class PlayerStats:
 
 	def getVictim(self,vicid):
 		if not self.victims.has_key(vicid):
-			self.victims[vicid] = VictimStats(vicid)
+			self.victims[vicid] = VictimStats(self, vicid)
 
 		return self.victims[vicid]
 
@@ -132,6 +132,10 @@ class PlayerStats:
                 # Now save any weapons we have
                 for cur in self.weapons.keys():
                         self.weapons[cur].saveWeapon(self, server_id)
+
+		# Aaand victims
+		for cur in self.victims.keys():
+			self.victims[cur].saveVictim(self,server_id)
 
 class WeaponStats:
         name = "unknown"
@@ -201,6 +205,7 @@ class VictimStats:
 	kills = 0
 	damage = 0
 	headshots = 0
+	attacker = 0
 
 	def __init__(self,attacker,victim):
 		self.attacker = attacker
