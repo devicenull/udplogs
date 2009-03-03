@@ -7,12 +7,15 @@ from twisted.enterprise import adbapi
 read_pool = adbapi.ConnectionPool("MySQLdb",db="playerstats",user="playerstats")
 write_pool = read_pool
 
+def _DBError(err):
+	main_log.error(err)
+
 class Stats:
 	servers = {}
 	
 	@staticmethod
-	def getPlayer(steamid,server_ip,server_port):
-		srvkey = "%s:%i" % (server_ip,server_port)
+	def getPlayer(steamid, server_ip, server_port):
+		srvkey = "%s:%i" % (server_ip, server_port)
 		if not Stats.servers.has_key(srvkey):
 			Stats.servers[srvkey] = {'map':'unknown', 'players':{}}
 
@@ -22,18 +25,18 @@ class Stats:
 		return Stats.servers[srvkey]['players'][steamid]
 
 	@staticmethod
-	def getServerMap(server_ip,server_port):
-		srvkey = "%s:%i" % (server_ip,server_port)
+	def getServerMap(server_ip, server_port):
+		srvkey = "%s:%i" % (server_ip, server_port)
 		return Stats.servers[srvkey]['map']
 
 	@staticmethod
-	def setServerMap(server_ip,server_port,map):
-		srvkey = "%s:%i" % (server_ip,server_port)		
+	def setServerMap(server_ip, server_port, map):
+		srvkey = "%s:%i" % (server_ip, server_port)		
 		Stats.servers[srvkey]['map'] = map
 
 	@staticmethod
-	def getPlayers(server_ip,server_port):
-		srvkey = "%s:%i" % (server_ip,server_port)
+	def getPlayers(server_ip, server_port):
+		srvkey = "%s:%i" % (server_ip, server_port)
 		return Stats.servers[srvkey]['players']
 
 
@@ -91,23 +94,23 @@ class PlayerStats:
 
 		return self.victims[vicid]
 
-        def savePlayer(self,server_ip,server_port,map):
-                later = write_pool.runInteraction(self._writePlayerToDB,(server_ip,server_port),map)
-                later.addErrback(self._DBError)
+        def savePlayer(self, server_ip, server_port, map):
+                later = write_pool.runInteraction(self._writePlayerToDB, (server_ip, server_port), map)
+                later.addErrback(_DBError)
 
         def _writePlayerToDB(self,txn,(server_ip,server_port),map):
 		txn.execute("""INSERT INTO servers(server_ip,server_port) VALUES(%s,%s)
-				ON DUPLICATE KEY UPDATE server_ip=server_ip""",(server_ip,server_port))
+				ON DUPLICATE KEY UPDATE server_ip=server_ip""",(server_ip, server_port))
 
-                txn.execute("""SELECT server_id FROM servers WHERE server_ip=%s AND server_port=%s""",(server_ip,server_port))
+                txn.execute("""SELECT server_id FROM servers WHERE server_ip=%s AND server_port=%s""",(server_ip, server_port))
 		server_id = txn.fetchone()[0]
 
 		txn.execute("""INSERT INTO players(server_id,player_id,lastconnect) VALUES(%s,SteamToInt(%s),%s)
-				ON DUPLICATE KEY UPDATE lastconnect=%s""",(server_id,self.steamid,self.lastconnect,self.lastconnect))
+				ON DUPLICATE KEY UPDATE lastconnect=%s""",(server_id, self.steamid, self.lastconnect, self.lastconnect))
 
 		txn.execute("""INSERT INTO player_maps(server_id,player_id,map_name,kills,deaths,headshots,suicides) VALUES(%s,SteamToInt(%s),%s,%s,%s,%s,%s)
                                 ON DUPLICATE KEY UPDATE kills=kills+%s, deaths=deaths+%s, suicides=suicides+%s, headshots=headshots+%s""",
-                                (server_id,self.steamid,map,self.kills,self.deaths,self.headshots,self.suicides,self.kills,self.deaths,self.suicides,self.headshots))
+                                (server_id, self.steamid, map, self.kills, self.deaths, self.headshots, self.suicides, self.kills, self.deaths, self.suicides, self.headshots))
                 self.kills=0
                 self.deaths=0
                 self.suicides=0
@@ -116,22 +119,19 @@ class PlayerStats:
 		for cur_name in self.names:
 			txn.execute("""INSERT INTO player_names(server_id,player_id,player_name,lastuse) VALUES(%s,SteamToInt(%s),%s,NOW())
 				ON DUPLICATE KEY UPDATE lastuse=NOW()"""
-				,(server_id,self.steamid,cur_name))
+				,(server_id, self.steamid, cur_name))
 
 		# Save any team info we have
 		for cur_team in self.teams.keys():
-			self.teams[cur_team].saveEvent(self,server_id)
+			self.teams[cur_team].saveEvent(self, server_id)
 
 		# Save any event info we have
 		for cur in self.events.keys():
-			self.events[cur].saveEvent(self,server_id)
+			self.events[cur].saveEvent(self, server_id)
 
                 # Now save any weapons we have
                 for cur in self.weapons.keys():
-                        self.weapons[cur].saveWeapon(self,server_id)
-
-        def _DBError(self,error):
-                main_log.error(str(error))
+                        self.weapons[cur].saveWeapon(self, server_id)
 
 class WeaponStats:
         name = "unknown"
@@ -144,20 +144,17 @@ class WeaponStats:
                 self.name = weapon
 
         def saveWeapon(self,player,server_id):
-                later = write_pool.runInteraction(self._writeWeaponToDB,player,server_id)
-                later.addErrback(self._DBError)
+                later = write_pool.runInteraction(self._writeWeaponToDB, player, server_id)
+                later.addErrback(DBError)
 
         def _writeWeaponToDB(self,txn,player,server_id):
                 txn.execute("""INSERT INTO player_weapons(server_id,player_id,weapon_name,kills,headshots,damage,tks) VALUES(%s,SteamToInt(%s),%s,%s,%s,%s,%s)
                                 ON DUPLICATE KEY UPDATE kills=kills+%s, headshots=headshots+%s, damage=damage+%s, tks=tks+%s""",
-                                (server_id,player.steamid,self.name,self.kills,self.headshots,self.damage,self.tks,self.kills,self.headshots,self.damage,self.tks))
+                                (server_id, player.steamid, self.name, self.kills, self.headshots, self.damage, self.tks, self.kills, self.headshots, self.damage, self.tks))
                 self.kills=0
                 self.damage=0
                 self.tks=0
                 self.headshots=0
-
-        def _DBError(self,error):
-                main_log.error(str(error))
 
 
 class EventStats:
@@ -173,18 +170,14 @@ class EventStats:
 		self.last_trigger = time.time()
 
 	def saveEvent(self,player,server_id):
-		later = write_pool.runInteraction(self._writeEventToDB,player,server_id)
-		later.addErrback(self._DBError)
+		later = write_pool.runInteraction(self._writeEventToDB, player, server_id)
+		later.addErrback(_DBError)
 
 	def _writeEventToDB(self,txn,player,server_id):
 		txn.execute("""INSERT INTO player_events(server_id,player_id,event_name,triggercount) VALUES(%s,SteamToInt(%s),%s,%s)
 				ON DUPLICATE KEY UPDATE triggercount=triggercount+%s"""
-				,(server_id,player.steamid,self.name,self.trigger_count,self.trigger_count))
+				,(server_id, player.steamid, self.name, self.trigger_count, self.trigger_count))
 		self.trigger_count = 0
-
-	def _DBError(self,error):
-		main_log.error(str(error))
-
 
 class TeamStats:
 	name = "unknown"
@@ -194,18 +187,14 @@ class TeamStats:
 		self.name = team
 
 	def saveEvent(self,player,server_id):
-		later = write_pool.runInteraction(self._writeTeamToDB,player,server_id)
-		later.addErrback(self._DBError)
+		later = write_pool.runInteraction(self._writeTeamToDB, player, server_id)
+		later.addErrback(_DBError)
 
 	def _writeTeamToDB(self,txn,player,server_id):
 		txn.execute("""INSERT INTO player_team(server_id,player_id,team_name,join_count) VALUES(%s,SteamToInt(%s),%s,%s)
 			ON DUPLICATE KEY UPDATE join_count=join_count+%s"""
-			,(server_id,player.steamid,self.name,self.join_count,self.join_count))
+			,(server_id, player.steamid, self.name, self.join_count, self.join_count))
 		self.join_count = 0
-
-	def _DBError(self,error):
-		main_log.error(str(error))
-
 
 class VictimStats:
 	steamid = "unknown"
