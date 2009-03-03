@@ -43,6 +43,6 @@ udp = UDPInput(eventhandler,9988)
 udp.start()
 
 #from input.file import FileInput
-#fs = FileInput(eventhandler,"/home/devicenull/source/udpLogs/test.log")
+#fs = FileInput(eventhandler,"/home/devicenull/source/udpLogs/logs/test_log")
 
 #fs.start()

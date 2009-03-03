@@ -17,8 +17,7 @@ def player_killed(event,ip,port,timestamp):
         curWeapon = attacker.getWeapon(event.weapon)
 	curWeapon.kills += 1
 
-	vs = attacker.getVictimStats(victim.steamid)
-	vs.damage += event.damage
+	vs = attacker.getVictim(victim.steamid)
 	vs.kills += 1
 
 	if event.headshot == 1:
@@ -47,8 +46,8 @@ def player_weaponstats(event,ip,port,timestamp):
 	
 	curWeapon.kills += event.kills
 	curWeapon.headshots += event.headshots
-	curWeapon.weapons[event.weapon].damage += event.damage
-	curWeapon.weapons[event.weapon].tks += event.tks
+	curWeapon.damage += event.damage
+	curWeapon.tks += event.tks
 
 def player_attacked(event,ip,port,timestamp):
 	attacker = Stats.getPlayer(event.attacker_steamid,ip,port)

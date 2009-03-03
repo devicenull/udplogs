@@ -21,7 +21,10 @@ class EventHandler:
 				main_log.warning("Attempted to register callback %s for unknown event %s" % (callback,cur))
 
 	def event(self,instr,ip="127.0.0.1",port=27015,timestamp="sometime"):
-		instr = instr.strip().replace("\n","").decode("utf-8")
+		try:
+			instr = instr.strip().replace("\n","").decode("utf-8")
+		except UnicodeDecodeError:
+			return
 
 		found = 0
 		for cur in self.events:

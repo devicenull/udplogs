@@ -18,13 +18,13 @@ class player_weaponstats:
 		self.team = obj.group("team")
 
 		self.weapon = obj.group("weapon")
-		self.shots = obj.group("shots")
-		self.hits = obj.group("hits")
-		self.kills = obj.group("kills")
-		self.headshots = obj.group("headshots")
-		self.tks = obj.group("tk")
-		self.damage = obj.group("damage")
-		self.deaths = obj.group("deaths")
+		self.shots = int(obj.group("shots"))
+		self.hits = int(obj.group("hits"))
+		self.kills = int(obj.group("kills"))
+		self.headshots = int(obj.group("headshots"))
+		self.tks = int(obj.group("tk"))
+		self.damage = int(obj.group("damage"))
+		self.deaths = int(obj.group("deaths"))
 	
 	def __str__(self):
 		return "player %s weaponstats for %s" % (self.name,self.weapon) 
