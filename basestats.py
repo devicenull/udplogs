@@ -48,7 +48,7 @@ class PlayerStats:
         suicides = 0
 	headshots = 0
 
-
+	victims = {}
         weapons = {}
 	events = {}
 	teams = {}
@@ -84,6 +84,12 @@ class PlayerStats:
 			self.teams[teamname] = TeamStats(teamname)
 
 		return self.teams[teamname]
+
+	def getVictim(self,vicid):
+		if not self.victims.has_key(vicid):
+			self.victims[vicid] = VictimStats(vicid)
+
+		return self.victims[vicid]
 
         def savePlayer(self,server_ip,server_port,map):
                 later = write_pool.runInteraction(self._writePlayerToDB,(server_ip,server_port),map)
@@ -199,3 +205,27 @@ class TeamStats:
 
 	def _DBError(self,error):
 		main_log.error(str(error))
+
+
+class VictimStats:
+	steamid = "unknown"
+	kills = 0
+	damage = 0
+	headshots = 0
+
+	def __init__(self,attacker,victim):
+		self.attacker = attacker
+		self.steamid = id
+
+	def saveVictim(self,server_id):
+		later = write_pool.runInteraction(self._writeVictimToDB,server_id)
+		later.addErrback(_DBError)
+
+	def _writeVictimToDB(self,txn,server_id):
+		txn.execute("""INSERT INTO player_targets(server_id,player_id,target_id,kills,headshots,damage) VALUES(%s,SteamToInt(%s),SteamToInt(%s),%i,%i)
+			ON DUPLICATE KEY UPDATE kills=kills+%i, headshots=headshots+%i, damage=damage+%i"""
+			,(server_id, self.attacker.steamid, self.steamid, self.kills, self.headshots, self.damage, self.kills, self.headshots, self.damage))
+
+		self.kills = 0
+		self.damage = 0
+		self.headshots = 0
