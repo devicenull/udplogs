@@ -1,4 +1,4 @@
-import logging
+import logging, threading
 
 main_log = logging.getLogger("main_log")
 
@@ -61,10 +61,13 @@ class PlayerStats:
 	events = {}
 	teams = {}
 
+	_lock = None
+
         def __init__(self,steamid):
                 self.steamid = steamid
                 if self.steamid == "BOT":
                         self.steamid="STEAM_0:1:1199"
+		self._lock = threading.Lock()
 
         def checkName(self,newname):
                 found = 0
@@ -104,7 +107,7 @@ class PlayerStats:
                 later.addErrback(_DBError)
 
         def _writePlayerToDB(self,txn,(server_ip,server_port),map):
-
+		txn.execute("START TRANSACTION")
                 txn.execute("""SELECT server_id FROM servers WHERE server_ip=%s AND server_port=%s""",(server_ip, server_port))
 		if txn.rowcount == 0:
 			txn.execute("""INSERT INTO servers(server_ip,server_port) VALUES(%s,%s)""",(server_ip, server_port))
@@ -112,8 +115,8 @@ class PlayerStats:
 		else:	
 			server_id = txn.fetchone()[0]
 
-		txn.execute("""INSERT INTO players(server_id,player_id,lastconnect) VALUES(%s,SteamToInt(%s),%s)
-				ON DUPLICATE KEY UPDATE lastconnect=%s""",(server_id, self.steamid, self.lastconnect, self.lastconnect))
+		txn.execute("""INSERT INTO players(server_id,player_id,lastconnect) VALUES(%s,SteamToInt(%s),floor(%s))
+				ON DUPLICATE KEY UPDATE lastconnect=floor(%s)""",(server_id, self.steamid, self.lastconnect, self.lastconnect))
 
 		txn.execute("""INSERT INTO player_maps(server_id,player_id,map_name,kills,deaths,headshots,suicides) VALUES(%s,SteamToInt(%s),%s,%s,%s,%s,%s)
                                 ON DUPLICATE KEY UPDATE kills=kills+%s, deaths=deaths+%s, suicides=suicides+%s, headshots=headshots+%s""",
@@ -122,29 +125,35 @@ class PlayerStats:
                 self.deaths=0
                 self.suicides=0
 		self.headshots=0
-
+	
+		nmlist = []	
+		query = """INSERT INTO player_names(server_id,player_id,player_name,lastuse) VALUES (%s,SteamToInt(%s),%s,NOW())"""
 		for cur_name in self.names:
-			txn.execute("""INSERT INTO player_names(server_id,player_id,player_name,lastuse) VALUES(%s,SteamToInt(%s),%s,NOW())
-				ON DUPLICATE KEY UPDATE lastuse=NOW()"""
-			,(server_id, self.steamid, cur_name))
-		txn = None
+			nmlist.append((server_id, self.steamid,cur_name))
+		
+		txn.executemany(query,nmlist)
 
 		# Save any team info we have
-		for cur_team in self.teams.keys():
-			self.teams[cur_team].saveEvent(self, server_id)
+		#for cur_team in self.teams.keys():
+		#	self.teams[cur_team]._writeTeamToDB(txn, self, server_id)
+		#self.teams = {}
 
 		# Save any event info we have
-		for cur in self.events.keys():
-			self.events[cur].saveEvent(self, server_id)
+		#for cur in self.events.keys():
+		#	self.events[cur]._writeEventToDB(txn, self, server_id)
+		#self.events = {}
 
                 # Now save any weapons we have
-                for cur in self.weapons.keys():
-                        self.weapons[cur].saveWeapon(self, server_id)
+                #for cur in self.weapons.keys():
+                #        self.weapons[cur]._writeWeaponToDB(txn, self, server_id)
+		#self.weapons = {}
 
 		# Aaand victims
-		for cur in self.victims.keys():
-			self.victims[cur].saveVictim(server_id)
-
+		#for cur in self.victims.keys():
+		#	self.victims[cur]._writeVictimToDB(txn, server_id)
+		#self.victims = {}
+		
+		txn.execute("COMMIT")
 
 class WeaponStats:
         name = "unknown"
